@@ -201,22 +201,35 @@ pipeline {
 
     stage('vote-docker-package') {
       agent any
+      when {
+        changeset '**/vote/**'
+        branch 'master'
+      }
+ // In vote-docker-package stage
       steps {
-        echo 'Packaging vote app with docker'
         script {
+          def sanitizedBranch = env.BRANCH_NAME.replace('/', '-')
           docker.withRegistry('https://index.docker.io/v1/', 'dockerlogin') {
-            // ./vote is the path to the Dockerfile that Jenkins will find from the Github repo
             def voteImage = docker.build("norahalr/vote:${env.GIT_COMMIT}", "./vote")
             voteImage.push()
-            voteImage.push("${env.BRANCH_NAME}")
+            voteImage.push(sanitizedBranch)
             voteImage.push("latest")
           }
         }
-
       }
     }
 
-
+    stage('Quality Gate') {
+      agent any
+      when {
+        branch 'master'
+      }
+      steps {
+        timeout(time: 1, unit: 'HOURS') {
+          waitForQualityGate abortPipeline: true
+        }
+      }
+    }
     stage('deploy to dev') {
       agent any
       when {
@@ -224,7 +237,7 @@ pipeline {
       }
       steps {
         echo 'Deploy instavote app with docker compose'
-        sh 'docker-compose up -d'
+        sh 'docker compose up -d'
       }
     }
     
