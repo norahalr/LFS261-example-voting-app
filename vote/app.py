@@ -6,7 +6,7 @@ import random
 import json
 import logging
 
-option_a = os.getenv('OPTION_A', "Cats")
+option_a = os.getenv('OPTION_A', "Catss")
 option_b = os.getenv('OPTION_B', "Dogs")
 hostname = socket.gethostname()
 version = 'v1'
